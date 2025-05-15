@@ -7,6 +7,7 @@ const cartSection = document.getElementById('cart-section');
 const registerMsg = document.getElementById('register-msg');
 const checkoutMsg = document.getElementById('checkout-msg');
 const balanceDisplay = document.getElementById('balance-display');
+const cartLink = document.getElementById('cart-link');
 
 document.getElementById('register-btn').addEventListener('click', async () => {
   const username = document.getElementById('username').value.trim();
@@ -29,6 +30,11 @@ document.getElementById('register-btn').addEventListener('click', async () => {
     updateBalanceDisplay();
     loadProducts();
     loadCart();
+
+    // Update Cart link with currentUserId
+    if (cartLink) {
+      cartLink.href = `cart.html?userId=${currentUserId}`;
+    }
   } else {
     registerMsg.textContent = data.error || 'Error';
   }
@@ -143,6 +149,82 @@ async function updateQuantity(productId, quantity) {
 document.getElementById('checkout-btn').addEventListener('click', async () => {
   if (!currentUserId) return alert('Register first');
   checkoutMsg.textContent = '';
+  const res = await fetch(`/users/${currentUserId}/checkout`, { method: 'POST' });
+  const data = await res.json();
+  if (res.ok) {
+    checkoutMsg.style.color = 'green';
+    checkoutMsg.textContent = `Order placed! Total: $${data.order.total.toFixed(2)}. Remaining balance: $${data.remainingBalance.toFixed(2)}`;
+    userBalance = data.remainingBalance;
+    updateBalanceDisplay();
+    loadCart();
+  } else {
+    checkoutMsg.style.color = 'red';
+    if (data.error === 'Insufficient balance') {
+      checkoutMsg.textContent = 'Checkout failed: Insufficient balance. Please remove items from your cart.';
+    } else {
+      checkoutMsg.textContent = data.error || 'Checkout failed';
+    }
+  }
+});
+
+const balanceInput = document.getElementById('balance-input');
+const updateBalanceBtn = document.getElementById('update-balance-btn');
+const balanceMsg = document.getElementById('balance-msg');
+const checkoutBtn = document.getElementById('checkout-btn');
+
+updateBalanceBtn.addEventListener('click', async () => {
+  const newBalance = parseFloat(balanceInput.value);
+  balanceMsg.textContent = '';
+  if (isNaN(newBalance) || newBalance < 0) {
+    balanceMsg.style.color = 'red';
+    balanceMsg.textContent = 'Please enter a valid non-negative number';
+    return;
+  }
+  if (!currentUserId) {
+    balanceMsg.style.color = 'red';
+    balanceMsg.textContent = 'No user logged in';
+    return;
+  }
+  const res = await fetch(`/users/${currentUserId}/balance`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ balance: newBalance }),
+  });
+  const data = await res.json();
+  if (res.ok) {
+    userBalance = data.balance;
+    updateBalanceDisplay();
+    balanceMsg.style.color = 'green';
+    balanceMsg.textContent = 'Balance updated successfully';
+    loadCart();
+  } else {
+    balanceMsg.style.color = 'red';
+    balanceMsg.textContent = data.error || 'Failed to update balance';
+  }
+});
+
+// Checkout button cooldown timer (optional feature)
+checkoutBtn.addEventListener('click', async () => {
+  if (!currentUserId) return alert('Register first');
+  checkoutMsg.textContent = '';
+
+  // Disable button with countdown
+  checkoutBtn.disabled = true;
+  let countdown = 5;
+  const originalText = checkoutBtn.textContent;
+  checkoutBtn.textContent = `Please wait (${countdown})`;
+
+  const timerId = setInterval(() => {
+    countdown--;
+    if (countdown > 0) {
+      checkoutBtn.textContent = `Please wait (${countdown})`;
+    } else {
+      clearInterval(timerId);
+      checkoutBtn.textContent = originalText;
+      loadCart(); // re-enable button state based on cart & balance
+    }
+  }, 1000);
+
   const res = await fetch(`/users/${currentUserId}/checkout`, { method: 'POST' });
   const data = await res.json();
   if (res.ok) {
