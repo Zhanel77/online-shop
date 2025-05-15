@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Online Shop</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<h1>Online Shop</h1>
+
+<section id="register-section">
+  <h2>Register User</h2>
+  <input type="text" id="username" placeholder="Enter username" />
+  <button id="register-btn">Register</button>
+  <p id="register-msg"></p>
+</section>
+
+<section id="profile-section" style="display:none; text-align:center;">
+  <h3>User Profile</h3>
+  <p id="balance-display"></p>
+</section>
+
+<section id="products-section" style="display:none;">
+  <h2>Products</h2>
+  <div id="products-list"></div>
+</section>
+
+<section id="cart-section" style="display:none;">
+  <h2>Your Cart</h2>
+  <div id="cart-list"></div>
+  <button id="checkout-btn">Checkout</button>
+  <p id="checkout-msg"></p>
+</section>
+
+<script src="js/app.js"></script>
+</body>
+</html>
